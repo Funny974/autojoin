@@ -1,0 +1,106 @@
+-- Auto Joiner GUI Script Final by funnyoutubeurreal
+-- Compatible avec la plupart des executeurs Roblox
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+-- Configuration
+local LOCALHOST_URL = "http://192.168.42.198:3000"
+local AUTO_JOIN_ENABLED = false
+local CHECK_INTERVAL = 1 -- Vérification toutes les 1 seconde
+
+-- Variables globales
+local gui = nil
+local autoJoinButton = nil
+local statusLabel = nil
+
+-- Fonction pour faire une requête HTTP (version améliorée)
+local function httpGet(url)
+    local success, result = pcall(function()
+        -- Essai avec différentes méthodes selon l'exécuteur
+        if syn and syn.request then
+            local response = syn.request({
+                Url = url,
+                Method = "GET"
+            })
+            return response.Body
+        elseif request then
+            local response = request({
+                Url = url,
+                Method = "GET"
+            })
+            return response.Body
+        else
+            -- Méthode standard
+            return HttpService:GetAsync(url)
+        end
+    end)
+    
+    if success then
+        return result
+    else
+        warn("Erreur HTTP: " .. tostring(result))
+        return nil
+    end
+end
+
+-- Fonction pour extraire le Job ID depuis le texte
+local function extractJobId(text)
+    if not text or text == "Aucun message" or text == "" then
+        return nil
+    end
+    
+    -- Nettoie le texte (enlève espaces et retours ligne)
+    text = string.gsub(text, "%s+", "")
+    
+    -- Cherche un pattern de Job ID Roblox (format standard)
+    local jobId = string.match(text, "([%w%-]+)")
+    
+    -- Vérification basique si c'est un Job ID valide
+    if jobId and string.len(jobId) > 10 then
+        return jobId
+    end
+    
+    return nil
+end
+
+-- Fonction pour rejoindre un serveur avec Job ID
+local function joinServer(jobId)
+    if not jobId then
+        return false
+    end
+    
+    local success, error = pcall(function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, player)
+    end)
+    
+    if success then
+        print("🚀 Tentative de connexion au serveur: " .. jobId)
+        return true
+    else
+        warn("❌ Erreur de téléportation: " .. tostring(error))
+        return false
+    end
+end
+
+-- Fonction principale d'auto-join
+local function checkAndJoin()
+    if not AUTO_JOIN_ENABLED then
+        return
+    end
+    
+    -- Récupère le contenu de l'IP locale
+    local content = httpGet(LOCALHOST_URL)
+    
+    if content then
+        local jobId = extractJobId(content)
+        
+        if jobId then
+            statusLabel.Text = "🔄 Job ID trouvé: " .. string.sub(jobId, 1, 8) .. "..."
+            
+            -- Tentative de connexion im
