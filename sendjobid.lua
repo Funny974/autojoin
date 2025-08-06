@@ -1,6 +1,8 @@
 -- Script rapide pour envoyer Job ID via Webhook (sans GUI)
 -- Créé par funnyoutubeurreal
 
+wait(2) -- La ligne que tu as demandé d'ajouter au tout début
+
 local HttpService = game:GetService("HttpService")
 
 -- Configuration
