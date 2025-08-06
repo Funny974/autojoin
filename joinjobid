@@ -103,4 +103,179 @@ local function checkAndJoin()
         if jobId then
             statusLabel.Text = "🔄 Job ID trouvé: " .. string.sub(jobId, 1, 8) .. "..."
             
-            -- Tentative de connexion im
+            -- Tentative de connexion immédiate
+            if joinServer(jobId) then
+                statusLabel.Text = "✅ Connexion en cours..."
+            else
+                statusLabel.Text = "❌ Échec de connexion"
+            end
+        else
+            statusLabel.Text = "⏳ En attente d'un Job ID..."
+        end
+    else
+        statusLabel.Text = "❌ Erreur: Serveur inaccessible"
+    end
+end
+
+-- Fonction pour créer l'interface GUI
+local function createGUI()
+    -- Supprime l'ancienne GUI si elle existe
+    if gui then
+        gui:Destroy()
+    end
+    
+    -- Création de l'interface principale
+    gui = Instance.new("ScreenGui")
+    gui.Name = "AutoJoinerGUI"
+    gui.Parent = CoreGui
+    gui.ResetOnSpawn = false
+    
+    -- Frame principale
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 350, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = gui
+    
+    -- Coins arrondis
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = mainFrame
+    
+    -- Titre
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 40)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "🚀 Auto Joiner"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = mainFrame
+    
+    -- Crédit
+    local creditLabel = Instance.new("TextLabel")
+    creditLabel.Size = UDim2.new(1, 0, 0, 20)
+    creditLabel.Position = UDim2.new(0, 0, 0, 35)
+    creditLabel.BackgroundTransparency = 1
+    creditLabel.Text = "by funnyoutubeurreal"
+    creditLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    creditLabel.TextScaled = true
+    creditLabel.Font = Enum.Font.Gotham
+    creditLabel.Parent = mainFrame
+    
+    -- Bouton Auto Join
+    autoJoinButton = Instance.new("TextButton")
+    autoJoinButton.Size = UDim2.new(0.8, 0, 0, 50)
+    autoJoinButton.Position = UDim2.new(0.1, 0, 0.4, 0)
+    autoJoinButton.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+    autoJoinButton.BorderSizePixel = 0
+    autoJoinButton.Text = "🔴 Auto Join: OFF"
+    autoJoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    autoJoinButton.TextScaled = true
+    autoJoinButton.Font = Enum.Font.GothamBold
+    autoJoinButton.Parent = mainFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+    buttonCorner.Parent = autoJoinButton
+    
+    -- Label de statut
+    statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(0.9, 0, 0, 30)
+    statusLabel.Position = UDim2.new(0.05, 0, 0.75, 0)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "⭕ Auto Join désactivé"
+    statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    statusLabel.TextScaled = true
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.Parent = mainFrame
+    
+    -- Bouton de fermeture
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -35, 0, 5)
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+    closeButton.BorderSizePixel = 0
+    closeButton.Text = "✕"
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.TextScaled = true
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.Parent = mainFrame
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 15)
+    closeCorner.Parent = closeButton
+    
+    -- Fonction du bouton Auto Join
+    autoJoinButton.MouseButton1Click:Connect(function()
+        AUTO_JOIN_ENABLED = not AUTO_JOIN_ENABLED
+        
+        if AUTO_JOIN_ENABLED then
+            autoJoinButton.Text = "🟢 Auto Join: ON"
+            autoJoinButton.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+            statusLabel.Text = "🔄 Auto Join activé - Recherche..."
+        else
+            autoJoinButton.Text = "🔴 Auto Join: OFF"
+            autoJoinButton.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+            statusLabel.Text = "⭕ Auto Join désactivé"
+        end
+    end)
+    
+    -- Fonction du bouton de fermeture
+    closeButton.MouseButton1Click:Connect(function()
+        AUTO_JOIN_ENABLED = false
+        gui:Destroy()
+    end)
+    
+    -- Rendre la fenêtre déplaçable
+    local dragging = false
+    local dragInput = nil
+    local dragStart = nil
+    local startPos = nil
+    
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- Boucle principale d'auto-join
+spawn(function()
+    while true do
+        if AUTO_JOIN_ENABLED then
+            checkAndJoin()
+        end
+        wait(CHECK_INTERVAL)
+    end
+end)
+
+-- Lancement de l'interface
+createGUI()
+
+print("🚀 Auto Joiner chargé avec succès!")
+print("📡 IP configurée: " .. LOCALHOST_URL)
+print("👤 Créé par funnyoutubeurreal")
